@@ -1,0 +1,91 @@
+<!-- labelFontsize, LabelFont, labelBold,labelItalic,labelTextColor -->
+<!-- ctrlFontSize,CtrlFont,CtrlBold,ctrlItalic,ctrlTextColor,ctrlFillcolor -->
+
+<div>
+  <div data---="properties2__?__scrollbar:0">
+    <script type="text/html">
+      [ { group: 'Datasource', label: 'DataSource', name: 'DataSource', type:
+      'list', items: '%input_objects' }, { group: 'Datasource', label:
+      'DataSourceField', name: 'DataSourceField', type: 'list', items:
+      '%input_formfields', dircustom: false, value: '' }, /*{ group:
+      'Datasource', label: 'DataType', name: 'DataType', type: 'list', value:
+      'string', required: 1, items: [{ id: 'string', name: 'String' }],
+      dirsearch: 'Search datasource', dircustom: false },*/ { group: 'Rules',
+      label: 'Definition', name: 'Definition', type: 'exec', exec:
+      '?/openrules', value: 'Open editor' }, { group: 'Attributes', label:
+      'CtrlName', name: 'CtrlName', type: 'string', value: 'InputName' }, {
+      group: 'Attributes', label: 'CtrlFont', name: 'CtrlFont', type: 'list',
+      value: '1', items: [{ id: '1', name: '@Font-face 1'}, { id: '2', name:
+      '@Font-face 2'}] }, { group: 'Attributes', label: 'CtrlFontSize', name:
+      'FontSize', type: 'number', value: 14 }, { group: 'Attributes', label:
+      'CtrlBold', name: 'Bold', type: 'bool', value: false }, { group:
+      'Attributes', label: 'CtrlItalic', name: 'Italic', type: 'bool', value:
+      false }, { group: 'Attributes', label: 'CtrlTextColor', name: 'TextColor',
+      type: 'color', value: '#e73323' }, { group: 'Attributes', label:
+      'CtrlFillColor', name: 'FillColor', type: 'color', value: '#e73323' }, {
+      group: 'Attributes', label: 'Label', name: 'Label', type: 'string', value:
+      'InputLabel' }, { group: 'Attributes', label: 'LabelParams', name:
+      'LabelParams', type: 'string', value: '' }, { group: 'Attributes', label:
+      'NoLabel', name: 'NoLabel', type: 'bool', value: false }, { group:
+      'Attributes', label: 'KeepLabelSpace', name: 'LabelSpace', type: 'bool',
+      value: false }, { group: 'Attributes', label: 'LabelFont', name:
+      'LabelFont', type: 'list', value: '1', items: [{ id: 1, name: '@Font-face
+      1'}, { id: 2, name: '@Font-face 2'}] }, { group: 'Attributes', label:
+      'LabelFontSize', name: 'LabelFontSize', type: 'number', value: 14 }, {
+      group: 'Attributes', label: 'LabelBold', name: 'LabelBold', type: 'bool',
+      value: false }, { group: 'Attributes', label: 'LabelItalic', name:
+      'LabelItalic', type: 'bool', value: false }, { group: 'Attributes', label:
+      'LabelTextColor', name: 'LabelTextColor', type: 'color', value: '#e73323'
+      }, { group: 'Attributes', label: 'Height', note: '"100px" or "50%" or
+      "10"(rows) default: 4 rows', name: 'Height', type: 'string', value: '4' },
+      { group: 'Attributes', label: 'Hide V Scrollbar', name: 'ScrollbarV',
+      type: 'bool', value: false }, { group: 'Attributes', label: 'Hide H
+      Scrollbar', name: 'ScrollbarH', type: 'bool', value: false }, { group:
+      'Attributes', label: 'WordWrap', name: 'WordWrap', type: 'bool', value:
+      false }, { group: 'Attributes', label: 'Mandatory', name: 'Mandatory',
+      type: 'bool', value: false }, { group: 'Attributes', label: 'ReadOnly',
+      name: 'ReadOnly', type: 'bool', value: false }, { group: 'Attributes',
+      label: 'Hidden', name: 'Hidden', type: 'bool', value: false }, { group:
+      'Attributes', label: 'Blurred', name: 'Blurred', type: 'bool', value:
+      false }, { group: 'Attributes', label: 'UpdateOnNewOnly', name:
+      'UpdateOnNewOnly', type: 'bool', value: false }, /*{ group: 'Attributes',
+      label: 'Height (in px)', name: 'Height', type: 'number', value: 0 },*/ {
+      group: 'Attributes', label: 'Width (in px)', name: 'Width', type:
+      'number', value: 0 }, { group: 'Attributes', label: 'CustomClass', name:
+      'CustomClass', type: 'string', value: '', note: 'Prefix:
+      "AB_input_custom_"' }, ]
+    </script>
+  </div>
+</div>
+
+<template id="help-input"> **Attributes** </template>
+
+<script>
+  PLUGIN(function (exports) {
+    exports.reload = function (model) {
+      //console.log('Input | model-->', model);//
+      SET(
+        "%input_objects",
+        app.instances_datasources(common.settingsid, "object")
+      );
+
+      if (model.DataSource) {
+        var [id] = model.DataSource.split("_");
+        var form = app.instances.find((inst) => inst.id === id);
+        form && SET("%input_formfields", form.formfields);
+      }
+      UPD("?");
+    };
+
+    exports.openrules = function () {
+      if (!exports.model.Rules) exports.model.Rules = { rules: {} };
+      SET("rulesform", exports.model.Rules || {});
+      SET("common.form", "rulesform");
+    };
+
+    // this is called from /forms/rules.html
+    exports.saverules = function (rules) {
+      SET("?.Rules", rules);
+    };
+  });
+</script>

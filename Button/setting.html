@@ -1,0 +1,204 @@
+<!-- { group: 'State', label: 'Enabled', name: 'Enabled', type: 'list', empty: '---', items: '%objects_boolean' }, -->
+<!-- { group: 'State', label: 'Visible', name: 'Visible', type: 'list', empty: '---', items: '%objects_ds_states', value: 'always' }, -->
+
+<div>
+  <div data---="properties2__?__scrollbar:0;change:?/change">
+    <script type="text/html">
+      [ { group: 'Action', label: 'Type', name: 'Type', type: 'list', items: [{
+      id: 'trigger', name: 'Trigger' }, { id: 'endpoint', name: 'Endpoint
+      request' }, { id: 'set', name: 'Setter' }] }, { group: 'Action', label:
+      'Trigger', name: 'Trigger', type: 'list', items: '%objects_triggers',
+      show: 'o => o.Type === "trigger"' }, { group: 'Action', label:
+      'DataSource', name: 'DataSource', type: 'list', items:
+      '%objects_datasources', show: 'o => o.Type === "set"' }, { group:
+      'Action', label: 'DataSourceProperty', name: 'DataSourceProperty', type:
+      'string', show: 'o => o.Type === "set"' }, { group: 'Action', label:
+      'DataSourceValue', name: 'DataSourceValue', type: 'string', show: 'o =>
+      o.Type === "set"' }, { group: 'Action', label: 'DataSourceValueType',
+      name: 'DataSourceValueType', type: 'list', value: 'string', items: [{ id:
+      'string', name: 'String' }, { id: 'number', name: 'Number' }, { id:
+      'boolean', name: 'Boolean' }, { id: 'date', name: 'Date' }], show: 'o =>
+      o.Type === "set"' }, { group: 'Action', label: 'Program', name: 'Program',
+      type: 'list', empty: '---', items: '%apps', show: 'o => o.Type ===
+      "trigger" && o.Trigger === "PORTAL_OpenProgram"' }, { group: 'Action',
+      label: 'ProgramArguments', name: 'Arguments', type: 'exec', exec:
+      '?/openarguments', value: 'Open arguments editor', show: 'o => o.Type ===
+      "trigger" && o.Trigger === "PORTAL_OpenProgram"' }, { group: 'Action',
+      label: 'ProgramAsModal', name: 'ProgramAsModal', type: 'bool', show: 'o =>
+      o.Type === "trigger" && o.Trigger === "PORTAL_OpenProgram"' }, { group:
+      'Action', label: 'ModalWidth (%)', name: 'ModalWidth', type: 'number',
+      show: 'o => o.ProgramAsModal === true' }, { group: 'Action', label:
+      'ModalHeight (%)', name: 'ModalHeight', type: 'number', show: 'o =>
+      o.ProgramAsModal === true' }, { group: 'Action', label: 'Endpoint', name:
+      'Endpoint', type: 'list', items: '%button_endpoints', show: 'o => o.Type
+      === "endpoint"' }, { group: 'Action', label: 'Fields/Data', name: 'EData',
+      type: 'exec', exec: '?/opendata', value: 'Open data editor', show: 'o =>
+      o.Type === "endpoint"' }, { group: 'Attributes', label: 'CtrlName', name:
+      'CtrlName', type: 'string' }, { group: 'Attributes', label: 'Label', name:
+      'Label', type: 'string' }, { group: 'Attributes', label: 'LabelParams',
+      name: 'LabelParams', type: 'string' }, { group: 'Attributes', label:
+      'NoLabel', name: 'NoLabel', type: 'bool', value: false }, { group:
+      'Attributes', label: 'KeepLabelSpace', name: 'KeepLabelSpace', type:
+      'bool', value: false }, { group: 'Attributes', label: 'LabelFont', name:
+      'LabelFont', type: 'list', value: '1', items: [{ id: 1, name: '@Font-face
+      1'}, { id: 2, name: '@Font-face 2'}] }, { group: 'Attributes', label:
+      'LabelFontSize', name: 'FontSize', type: 'number', value: 14 }, { group:
+      'Attributes', label: 'LabelBold', name: 'Bold', type: 'bool', value: false
+      }, { group: 'Attributes', label: 'LabelItalic', name: 'Italic', type:
+      'bool', value: false }, { group: 'Attributes', label: 'LabelTextColor',
+      name: 'TextColor', type: 'color', value: '#e73323' }, { group:
+      'Attributes', label: 'LabelAlign', name: 'TextAlign', type: 'list', items:
+      [{ id: 'left', name: 'Left' }, { id: 'center', name:'Center' }, { id:
+      'right', name:'Right' }], value: 'auto', show: 'o => o.IconAlign !==
+      "center" && o.IconAlign !== "centerLeft" && o.IconAlign !== "centerRight"'
+      }, { group: 'Attributes', label: 'IconType', name: 'IconType', type:
+      'list', value: 'default', items: [{ id: 'default', name: 'Default' }, {
+      id: 'custom', name: 'Custom' }]}, { group: 'Attributes', label: 'Icon',
+      name: 'Icon', type: 'fontawesome', value: '', show: 'o => o.IconType ===
+      "default"' }, { group: 'Attributes', label: 'CustomIcon', name:
+      'CustomIcon', type: 'list', items: '%images', show: 'o => o.IconType ===
+      "custom"', value: '' }, { group: 'Attributes', label: 'IconAlign', name:
+      'IconAlign', type: 'list', items: [{ id: 'left', name:'Left' }, { id:
+      'right', name:'Right' }, {id: 'center', name: 'Center'}, { id:
+      'centerLeft', name: 'Center Left' }, { id: 'centerRight', name: 'Center
+      Right' }], value: 'left' }, { group: 'Attributes', label: 'FillColor',
+      name: 'FillColor', type: 'color', value: '#e73323' }, { group:
+      'Attributes', label: 'Border', name: 'Border', type: 'bool', value: false
+      }, { group: 'Attributes', label: 'BorderType', name: 'BorderType', type:
+      'list', items: [{ id: 'dotted', name: 'Dotted'}, { id: 'dashed', name:
+      'Dashed'}, { id: 'solid', name: 'Solid'}, { id: 'double', name: 'Double'},
+      { id: 'groove', name: 'Groove'}, { id: 'ridge', name: 'Ridge'}, { id:
+      'inset', name: 'Inset'}, { id: 'outset', name: 'Outset'}], show: 'o =>
+      o.Border === true', value: 'solid' }, { group: 'Attributes', label:
+      'BorderWidth (px)', name: 'BorderWidth', type: 'string', show: 'o =>
+      o.Border === true', value: '1' }, { group: 'Attributes', label:
+      'BorderColor', name: 'BorderColor', type: 'color', show: 'o => o.Border
+      === true', value: '#e73323' }, { group: 'Attributes', label: 'Hidden',
+      name: 'Hidden', type: 'bool', value: false },
+      <!-- { group: 'Attributes', label: 'Size', name: 'Size', type: 'list', items: [{ id: 'sm', name: 'Small' }, { id: 'md', name: 'Medium' }, { id: 'lg', name: 'Large' }], value: 'default' }, -->
+      { group: 'Attributes', label: 'Width', name: 'Width', type: 'list', items:
+      [{ id: 'auto', name:'Auto' }, { id: 'full', name:'Fill space' }, { id:
+      'custom', name:'Custom' }], value: 'auto' }, { group: 'Attributes', label:
+      'WidthCustom (px)', name: 'WidthCustom', type: 'string', show: 'o =>
+      o.Width === "custom"' }, { group: 'Attributes', label: 'Height (px)',
+      name: 'Height', type: 'string' }, { group: 'Attributes', label: 'Align',
+      name: 'Align', type: 'list', show: 'o => o.Width !== "full"', items: [{
+      id: 'left', name:'Left' }, { id: 'center', name:'Center' }, { id: 'right',
+      name:'Right' }], value: 'auto' }, { group: 'Attributes', label:
+      'PresetStyle', name: 'PresetStyle', type: 'list', items: [{ id: 'none',
+      name: '--' }, { id: 'primary', name:'Primary' }, { id: 'secondary', name:
+      'Secondary' }, { id: 'default', name:'Default' }, { id: 'info',
+      name:'Info' }, { id: 'warning', name: 'Warning' }, { id: 'danger',
+      name:'Danger' }], value: 'auto' }, { group: 'Attributes', label: 'Class',
+      name: 'Class', type: 'string', value: 'custom_class' }, ]
+    </script>
+  </div>
+</div>
+
+<template id="help-button">
+  **Action** Trigger can execute an action on other objects. Setter can set a
+  value to a datasource/objects state.
+</template>
+
+<script>
+  PLUGIN(function (exports) {
+    exports.reload = function (model) {
+      SET("%objects_triggers", app.instances_triggers(common.settingsid));
+      SET("%objects_datasources", app.instances_datasources(common.settingsid));
+      SET("%objects_boolean", [
+        { id: "always", name: "Always" },
+        ...app.instances_datasources(common.settingsid, "boolean"),
+        ...app.instances_states(common.settingsid, "boolean"),
+      ]);
+      SET("%objects_ds_states", [
+        { id: "always", name: "Always" },
+        ...app.instances_datasources(common.settingsid),
+        ...app.instances_states(common.settingsid),
+      ]);
+      SET("%objects_arguments", [
+        ...app.instances_datasources(common.settingsid),
+        ...app.instances_states(common.settingsid, "object", {
+          key: "rowdata",
+        }),
+      ]);
+
+      FUNC.loadApps((apps) => {
+        SET(
+          "%apps",
+          apps.map((a) => ({ id: a.AppName, name: a.AppName }))
+        );
+        UPD("?");
+      });
+
+      FUNC.loadImages(function (images) {
+        images.forEach(function (item) {
+          var img = {};
+          item.id = item.Id;
+          item.name = item.FileName;
+          item.url = item.Url;
+        });
+
+        images.unshift({ id: "new", name: "Upload new", classname: "b" });
+        SET("%images", images);
+        UPD("?");
+      });
+
+      DS.getEndpointsList(function (list) {
+        SET("%button_endpoints", list);
+        exports.scope();
+        UPD("?");
+      });
+    };
+
+    exports.change = function (field) {
+      var icons = GET("%images");
+
+      if (field.name === "CustomIcon" && field.value === "new") {
+        exports.upload();
+      } else if (field.name === "CustomIcon") {
+        var icon = icons.findItem("id", field.value);
+        SET("?.ImageUrl", icon.url);
+      }
+
+      // console.log(field);
+      // if (field.name === 'IconAlign' && field.value === 'center') {
+
+      // }
+    };
+
+    exports.upload = function () {
+      // console.log('model--->', exports.model);
+      var icons = GET("%images");
+      var opt = {};
+      opt.background = "transparent";
+      UPLOADFILE(opt, function (response) {
+        PUSH("%images", response);
+        var icon = icons.findItem("id", response.id);
+        SET("?.ImageUrl", icon.url); // actual url used in render.js
+        SET("?.CustomIcon", icon.id); // display name in the dropdown
+      });
+    };
+
+    exports.openarguments = () => {
+      exports.formfor = "arguments";
+      if (!Array.isArray(exports.model.ProgramArguments))
+        exports.model.ProgramArguments = [];
+      SET("argumentsform", exports.model.ProgramArguments || []);
+      SET("common.form", "argumentsform");
+    };
+
+    exports.opendata = () => {
+      exports.formfor = "endpoint";
+      if (!Array.isArray(exports.model.Data)) exports.model.Data = [];
+      SET("argumentsform", exports.model.Data || []);
+      SET("common.form", "argumentsform");
+    };
+
+    // this is called from /public/forms/arguments.html
+    exports.savearguments = (arguments) => {
+      if (exports.formfor === "endpoint") SET("?.Data", arguments);
+      else if (exports.formfor === "arguments")
+        SET("?.ProgramArguments", arguments);
+    };
+  });
+</script>

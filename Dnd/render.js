@@ -19,9 +19,7 @@ AppBuilder.register("uploadfile", function (exports) {
 
   exports.make = function (instance, config, element) {
     let text = "Drop to upload your file(s) or:";
-    if (config.TextValue) {
-      text = config.TextValue;
-    }
+    if (config.TextValue) text = config.TextValue;
 
     element.append(`
 
@@ -46,18 +44,6 @@ AppBuilder.register("uploadfile", function (exports) {
 			</div>
 		`);
 
-    // <div class="buttons-box">
-    // <button class="upload-btn">
-    // <i class="far fa-upload"></i>
-    // </button>
-    // <button class="upload-btn">
-    // <i class="fab fa-dropbox"></i>
-    // </button>
-    // <button class="upload-btn">
-    // <i class="fab fa-google-drive"></i>
-    // </button>
-    // </div>
-
     var uploadArea = element.find(".uploadfile-area");
     var wrap = element.find(".uploadfile");
     var label = element.find(".control-label");
@@ -65,8 +51,23 @@ AppBuilder.register("uploadfile", function (exports) {
     var uploadButton = element.find(".custom-file-upload");
     var uploadClick = element.find(".upload-on-click");
     var googleButton = element.find(".google-button");
+    var listitem = element.find(".item");
+    var del = element.find(".delete");
 
-    console.log(config.MaxFilesAmount);
+    config.FillColor
+      ? uploadArea.css("background-color", config.FillColor)
+      : uploadArea.css("background-color", "#fff");
+    config.FontSize && element.find(".text").css("font-size", config.FontSize);
+    config.Height && uploadArea.css("height", config.Height + "px");
+    config.Bold
+      ? uploadArea.css("font-weight", "bold")
+      : uploadArea.css("font-weight", "normal");
+    config.Italic
+      ? uploadArea.css("font-style", "italic")
+      : uploadArea.css("font-style", "normal");
+    config.TextColor && element.find(".text").css("color", config.TextColor);
+
+    if (config.Mandatory) label.aclass("required");
 
     config.BtnHeight && button.css("height", config.BtnHeight + "px");
     config.BtnWidth && button.css("width", config.BtnWidth + "px");
@@ -87,35 +88,9 @@ AppBuilder.register("uploadfile", function (exports) {
     config.Label = instance.translate(config.CtrlName);
     config.Label && label.html(config.Label);
     config.NoLabel && label.aclass("novisible");
-
     if (config.NoLabel)
       config.LabelSpace ? label.rclass("hidden") : label.aclass("hidden");
     else label.rclass("hidden");
-
-    if (config.Width === "custom") {
-      // uploadArea.css('width', config.WidthCustom +'px');
-      wrap.css("width", config.WidthCustom + "px");
-    } else if (config.Width === "full") uploadArea.aclass("btn-block");
-
-    if (!config.Hight) {
-      uploadArea.css("height", "100px");
-    }
-
-    config.FillColor
-      ? uploadArea.css("background-color", config.FillColor)
-      : uploadArea.css("background-color", "#fff");
-    config.FontSize && element.find(".text").css("font-size", config.FontSize);
-    config.Height && uploadArea.css("height", config.Height + "px");
-    config.Bold
-      ? uploadArea.css("font-weight", "bold")
-      : uploadArea.css("font-weight", "normal");
-    config.Italic
-      ? uploadArea.css("font-style", "italic")
-      : uploadArea.css("font-style", "normal");
-    config.TextColor && element.find(".text").css("color", config.TextColor);
-
-    if (config.Mandatory) label.aclass("required");
-
     config.LabelFontSize && label.css("font-size", config.LabelFontSize);
     config.LabelBold
       ? label.css("font-weight", "bold")
@@ -125,6 +100,9 @@ AppBuilder.register("uploadfile", function (exports) {
       : label.css("font-style", "normal");
     config.LabelTextColor && label.css("color", config.LabelTextColor);
 
+    if (config.Width === "custom") wrap.css("width", config.WidthCustom + "px");
+    else if (config.Width === "full") uploadArea.aclass("btn-block");
+
     if (config.Border)
       uploadArea.css(
         "border",
@@ -133,17 +111,11 @@ AppBuilder.register("uploadfile", function (exports) {
         } ${config.BorderColor}`
       );
 
-    config.Padding && element.css("padding", config.Padding);
-    config.Width !== "full" && element.aclass("align-" + config.Align);
-    config.PresetStyle &&
-      config.PresetStyle !== "none" &&
-      uploadArea.aclass("btn-" + config.PresetStyle);
+    config.FilesFontSize && listitem.css("font-size", config.FilesFontSize);
+    config.FilesFontColor && listitem.css("color", config.FilesFontColor);
+    config.FilesFontSize && del.css("font-size", config.FilesFontSize);
 
     // file upload
-
-    let dradAndDrop = document.querySelector(".uploadfile-area");
-    console.log(dradAndDrop);
-    console.log(uploadArea);
 
     uploadArea.on("dragenter", function (e) {
       console.log("dragenter");
@@ -167,19 +139,93 @@ AppBuilder.register("uploadfile", function (exports) {
       console.log(e);
       e.preventDefault();
       e.stopPropagation();
-      // dradAndDrop.classList.remove('active');
       var files = e.originalEvent.dataTransfer.files;
       console.log(files);
       for (let key in files) {
         console.log(files);
-        // if (files[key].name && files[key].lastModified) {
-        console.log(config.MaxFilesAmount);
-        console.log(config.MaxFilesWeight);
         if (
           dataSource.length < config.MaxFilesAmount &&
           filesSize + files[key].size < config.MaxFilesWeight * 1024 * 1024
         ) {
-          // const fileData = {};
+          const file = files[0];
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            var content = e.target.result;
+            fileData.name = files[key].name;
+            fileData.ID = Math.random();
+            fileData.size = files[key].size;
+            fileData.data = `<FileEnvelope><FileName>${fileData.name}</FileName><FileContent>${content}</FileContent></FileEnvelope>`;
+
+            dataSource.push(fileData);
+            console.log(dataSource);
+
+            instance.datasources.push(fileData.data);
+            console.log(instance.datasources);
+
+            filesSize += fileData.size;
+            console.log(filesSize);
+            element.find(".files")
+              .append(`<li class="list-item"title="${fileData.ID}">
+							<p class="item" >${fileData.name}</p>
+							<p class="delete">&#128937;</p>
+						</li>`);
+
+            let listElement = document.querySelectorAll(".list-item");
+            removeFile(listElement);
+          };
+          reader.readAsBinaryString(file);
+        }
+      }
+    });
+
+    function removeFile(listElement) {
+      function removeElement() {
+        console.log($(this).closest(".list-item"));
+        console.log(dataSource);
+        try {
+          for (let i = 0; i < dataSource.length; i++) {
+            if (dataSource[i].ID == $(this).parent().attr("title")) {
+              console.log($(this).parent());
+
+              console.log(dataSource[i].size);
+              filesSize -= dataSource[i].size;
+              console.log(filesSize);
+
+              dataSource.splice(i, 1);
+              console.log(dataSource);
+
+              instance.datasources.splice(i, 1);
+              console.log(instance.datasources);
+            }
+          }
+        } catch (error) {
+          console.log(error);
+        }
+
+        $(this).parent().remove();
+        console.log($(this).parent());
+      }
+
+      listElement.forEach(function (el) {
+        el.querySelector(".delete").onclick = removeElement;
+        console.log(el);
+      });
+    }
+
+    // Lile upload button
+
+    console.log(uploadClick);
+    uploadClick.on("change", (e) => {
+      var files = e.target.files;
+      console.log(files);
+      for (let key in files) {
+        console.log(files);
+        console.log(dataSource);
+        if (
+          dataSource.length < config.MaxFilesAmount &&
+          filesSize + files[key].size < config.MaxFilesWeight * 1024 * 1024
+        ) {
+          const fileData = {};
           const file = files[0];
           const reader = new FileReader();
           reader.onload = function (e) {
@@ -196,57 +242,18 @@ AppBuilder.register("uploadfile", function (exports) {
 
             filesSize += fileData.size;
             console.log(filesSize);
-            // filesList.push(files[key].name);
             element.find(".files")
               .append(`<li class="list-item"title="${fileData.ID}">
-								<p class="item" >${fileData.name}</p>
-								<p class="delete">&#128937;</p>
-							</li>`);
+							<p class="item" >${fileData.name}</p>
+							<p class="delete">&#128937;</p>
+						</li>`);
 
             let listElement = document.querySelectorAll(".list-item");
-
-            function removeElement() {
-              console.log($(this).closest(".list-item"));
-              console.log(dataSource);
-              try {
-                for (let i = 0; i < dataSource.length; i++) {
-                  if (dataSource[i].ID == $(this).parent().attr("title")) {
-                    console.log($(this).parent());
-                    console.log(dataSource[i].size);
-                    filesSize -= dataSource[i].size;
-                    console.log(filesSize);
-                    dataSource.splice(i, 1);
-                    console.log(dataSource);
-                    instance.datasources.splice(i, 1);
-                    console.log(instance.datasources);
-                  }
-                }
-              } catch {
-                console.log(error);
-              }
-
-              $(this).parent().remove();
-              // $(this).parent().remove();
-              console.log($(this).parent());
-            }
-
-            listElement.forEach(function (el) {
-              el.querySelector(".delete").onclick = removeElement;
-              console.log(el);
-            });
+            removeFile(listElement);
           };
           reader.readAsBinaryString(file);
         }
-        // }
       }
-
-      console.log(dataSource);
-
-      var listitem = element.find(".item");
-      var del = element.find(".delete");
-      config.FilesFontSize && listitem.css("font-size", config.FilesFontSize);
-      config.FilesFontColor && listitem.css("color", config.FilesFontColor);
-      config.FilesFontSize && del.css("font-size", config.FilesFontSize);
     });
 
     // Dropbox
@@ -263,33 +270,13 @@ AppBuilder.register("uploadfile", function (exports) {
       location.appendChild(scriptTag);
     };
 
-    // options = {
-    // success: function (files) {
-    // console.log(files);
-    // for (let file of files) {
-    // fetch(file.link)
-    // .then((response) => response.arrayBuffer())
-    // .then((data) => {
-    // dataSource.push(data);
-    // console.log(data);
-    // console.log(dataSource);
-    // })
-    // .catch((error) => {
-    // console.error("Error:", error);
-    // });
-    // }
-    // },
-    // cancel: function () {},
-    // multiselect: true,
-    // folderselect: false,
-    // };
-
     var dropCodeToBeCalled = function () {
       element.find(".dropbox-button").on("click", function () {
         Dropbox.choose({
           multiselect: true,
           folderselect: false,
           linkType: "direct",
+
           success: function (files) {
             console.log(files);
             for (let file of files) {
@@ -317,35 +304,13 @@ AppBuilder.register("uploadfile", function (exports) {
                     console.log(dataSource);
 
                     let listElement = document.querySelectorAll(".list-item");
-
-                    function removeElement() {
-                      for (let i = 0; i < dataSource.length; i++) {
-                        if (dataSource[i].ID == $(this).attr("title")) {
-                          console.log(filesSize);
-                          console.log(dataSource[i].size);
-                          filesSize -= dataSource[i].size;
-                          console.log(filesSize);
-                          dataSource.splice(i, 1);
-                          console.log(dataSource);
-                          instance.datasources.splice(i, 1);
-                          console.log(instance.datasources);
-                        }
-                      }
-                      this.remove();
-                    }
-                    listElement.forEach(function (el) {
-                      el.onclick = removeElement;
-                    });
+                    removeFile(listElement);
                   });
               }
             }
           },
         });
       });
-
-      // var buttonDRB = Dropbox.createChooseButton(options);
-      // console.log(buttonDRB);
-      // element.find('.upload-box').append(buttonDRB);
     };
     loadDropJS(
       "https://www.dropbox.com/static/api/2/dropins.js",
@@ -412,83 +377,6 @@ AppBuilder.register("uploadfile", function (exports) {
       googleCodeToBeCalled,
       document.body
     );
-
-    console.log(uploadClick);
-    uploadClick.on("change", (e) => {
-      console.log(e.target.files);
-
-      var files = e.target.files;
-      console.log(files);
-      for (let key in files) {
-        console.log(files);
-        // if (files[key].name && files[key].lastModified) {
-        console.log(config.MaxFilesAmount);
-        console.log(config.MaxFilesWeight);
-        console.log(dataSource);
-        if (
-          dataSource.length < config.MaxFilesAmount &&
-          filesSize + files[key].size < config.MaxFilesWeight * 1024 * 1024
-        ) {
-          const fileData = {};
-          const file = files[0];
-          const reader = new FileReader();
-          reader.onload = function (e) {
-            var content = e.target.result;
-            fileData.name = files[key].name;
-            fileData.ID = Math.random();
-            fileData.size = files[key].size;
-            fileData.data = `<FileEnvelope><FileName>${fileData.name}</FileName><FileContent>${content}</FileContent></FileEnvelope>`;
-
-            dataSource.push(fileData);
-            console.log(dataSource);
-            instance.datasources.push(fileData.data);
-            console.log(instance.datasources);
-
-            filesSize += fileData.size;
-            console.log(filesSize);
-            // filesList.push(files[key].name);
-            element.find(".files")
-              .append(`<li class="list-item"title="${fileData.ID}">
-								<p class="item" >${fileData.name}</p>
-								<p class="delete">&#128937;</p>
-							</li>`);
-
-            let listElement = document.querySelectorAll(".list-item");
-
-            function removeElement() {
-              for (let i = 0; i < dataSource.length; i++) {
-                if (dataSource[i].ID == $(this).attr("title")) {
-                  console.log(filesSize);
-                  console.log(dataSource[i].size);
-                  filesSize -= dataSource[i].size;
-                  console.log(filesSize);
-                  dataSource.splice(i, 1);
-                  console.log(dataSource);
-                  instance.datasources.splice(i, 1);
-                  console.log(instance.datasources);
-                }
-              }
-              this.remove();
-            }
-            listElement.forEach(function (el) {
-              el.onclick = removeElement;
-            });
-          };
-          reader.readAsBinaryString(file);
-        }
-        // }
-      }
-
-      console.log(dataSource);
-
-      var listitem = element.find(".item");
-      var del = element.find(".delete");
-      config.FilesFontSize && listitem.css("font-size", config.FilesFontSize);
-      config.FilesFontColor && listitem.css("color", config.FilesFontColor);
-      config.FilesFontSize && del.css("font-size", config.FilesFontSize);
-    });
-
-    console.log(instance);
 
     instance.on("ready", function () {});
   };

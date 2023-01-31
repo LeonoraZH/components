@@ -132,6 +132,7 @@ AppBuilder.register("uploadfile", function (exports) {
       e.preventDefault();
       e.stopPropagation();
     });
+
     const fileData = {};
     const dataSource = [];
     let filesSize = 0;
@@ -180,8 +181,14 @@ AppBuilder.register("uploadfile", function (exports) {
 
     function removeFile(listElement) {
       function removeElement() {
-        console.log($(this).closest(".list-item"));
         console.log(dataSource);
+
+        var p = $(this).parent();
+        console.log(p);
+
+        var a = p.attr("title");
+        console.log(a);
+
         try {
           for (let i = 0; i < dataSource.length; i++) {
             if (dataSource[i].ID == $(this).parent().attr("title")) {
@@ -199,9 +206,8 @@ AppBuilder.register("uploadfile", function (exports) {
             }
           }
         } catch (error) {
-          console.log(error);
+          console.error(error);
         }
-
         $(this).parent().remove();
         console.log($(this).parent());
       }
@@ -225,7 +231,6 @@ AppBuilder.register("uploadfile", function (exports) {
           dataSource.length < config.MaxFilesAmount &&
           filesSize + files[key].size < config.MaxFilesWeight * 1024 * 1024
         ) {
-          const fileData = {};
           const file = files[0];
           const reader = new FileReader();
           reader.onload = function (e) {

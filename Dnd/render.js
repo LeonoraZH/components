@@ -6,37 +6,29 @@ AppBuilder.register("uploadfile", function (exports) {
   exports.config = {}; // a default configuration
   exports.import = []; // 3rd party dependencies
   exports.settings = ""; // HTML settings
-  exports.css = `
-.O_uploadfile .upload-on-click[type="file"] { display: none; }
-.O_uploadfile .upload-box { display: flex; gap: 10px }
-.O_uploadfile .custom-file-upload { padding: 6px 12px 6px 12px; margin: 0 0 0 0; display: flex; jastify-content: center; align-content: center; border-radius: var(--radius); background-color: grey; color: white; cursor: pointer; }
-.O_uploadfile .buttons-box { display: flex; align-self: center; gap: 12px}
-.O_uploadfile .upload-btn { margin: 0 0 0 0; padding: 6px 12px 6px 12px; display: flex; jastify-content: center; align-content: center;  background-color: grey; width: 30px; height: 30px; }
-	`;
+  exports.css = ``;
   exports.type = "uploadfile";
+  exports.class = "formfield";
 
   // Editor implementation
 
   exports.make = function (instance, config, element) {
-    let text = "Drop to upload your file(s) or:";
-    if (config.TextValue) text = config.TextValue;
-
     element.append(`
 
 			<label class="control-label"></label>
 			<div class="uploadfile">
 				<div class="uploadfile-area" >
-					<p class="text">${text}</p>
+					<p class="text"></p>
 					<div class="upload-box">
-						<label class="custom-file-upload">
+						<label class="custom-file-upload  upload-btn">
 							<input type="file" class="upload-on-click upload-btn" multiple />
-							<i class="far fa-upload"></i>
+							<i class="far fa-upload icons"></i>
 						</label>
 						<button class="dropbox-button upload-btn">
-							<i class="fab fa-dropbox"></i>
+							<i class="fab fa-dropbox icons"></i>
 						</button>
 						<button class="google-button upload-btn">
-							<i class="fab fa-google-drive"></i>
+							<i class="fab fa-google-drive icons"></i>
 						</button>
 					</div>
 				</div>
@@ -44,16 +36,20 @@ AppBuilder.register("uploadfile", function (exports) {
 			</div>
 		`);
 
+    var text = element.find(".text");
     var uploadArea = element.find(".uploadfile-area");
     var wrap = element.find(".uploadfile");
     var label = element.find(".control-label");
-    var button = element.find(".upload-btn");
-    var uploadButton = element.find(".custom-file-upload");
     var uploadClick = element.find(".upload-on-click");
-    var googleButton = element.find(".google-button");
-    var listitem = element.find(".item");
+    var listitem = element.find(".list-item");
     var del = element.find(".delete");
+    var icons = element.find(".icons");
+    var buttons = element.find(".upload-btn");
+    var browseButton = element.find(".custom-file-upload");
+    var dropBoxButton = element.find(".dropbox-button");
+    var googleButton = element.find(".google-button");
 
+    config.TextValue && text.html(config.TextValue);
     config.FillColor
       ? uploadArea.css("background-color", config.FillColor)
       : uploadArea.css("background-color", "#fff");
@@ -69,21 +65,22 @@ AppBuilder.register("uploadfile", function (exports) {
 
     if (config.Mandatory) label.aclass("required");
 
-    config.BtnHeight && button.css("height", config.BtnHeight + "px");
-    config.BtnWidth && button.css("width", config.BtnWidth + "px");
-    config.BtnFillColor && button.css("background", config.BtnFillColor);
-    config.BtnFillColor && uploadButton.css("background", config.BtnFillColor);
-    config.BtnHeight && uploadButton.css("height", config.BtnHeight + "px");
-    config.BtnWidth && uploadButton.css("width", config.BtnWidth + "px");
-    config.BtnFillColor && button.css("background", config.BtnFillColor);
+    config.BtnIconSize && icons.css("font-size", config.BtnIconSize + "px");
+    config.BtnHeight && buttons.css("height", config.BtnHeight + "px");
+    config.BtnWidth && buttons.css("width", config.BtnWidth + "px");
+    config.BtnFillColor && buttons.css("background", config.BtnFillColor);
+    config.BtnFillColor && buttons.css("background", config.BtnFillColor);
     if (config.BtnBorder)
-      button.css(
+      buttons.css(
         "border",
         `${config.BtnBorderWidth === "" ? "1" : config.BtnBorderWidth}px ${
           config.BtnBorderType
         } ${config.BtnBorderColor}`
       );
-    config.BtnTextColor && button.css("color", config.BtnTextColor);
+    config.BtnIconColor && buttons.css("color", config.BtnIconColor);
+    if (config.BtnHideBrowse) browseButton.css("display", "none");
+    if (config.BtnHideDropBox) dropBoxButton.css("display", "none");
+    if (config.BtnHideGoogle) googleButton.css("display", "none");
 
     config.Label = instance.translate(config.CtrlName);
     config.Label && label.html(config.Label);
@@ -103,17 +100,17 @@ AppBuilder.register("uploadfile", function (exports) {
     if (config.Width === "custom") wrap.css("width", config.WidthCustom + "px");
     else if (config.Width === "full") uploadArea.aclass("btn-block");
 
-    if (config.Border)
-      uploadArea.css(
-        "border",
-        `${config.BorderWidth === "" ? "1" : config.BorderWidth}px ${
-          config.BorderType
-        } ${config.BorderColor}`
-      );
+    uploadArea.css(
+      "border",
+      `${config.BorderWidth === "" ? "1" : config.BorderWidth}px ${
+        config.BorderType
+      } ${config.BorderColor}`
+    );
 
     config.FilesFontSize && listitem.css("font-size", config.FilesFontSize);
     config.FilesFontColor && listitem.css("color", config.FilesFontColor);
     config.FilesFontSize && del.css("font-size", config.FilesFontSize);
+    console.log(config.FilesFontSize);
 
     // file upload
 
@@ -133,88 +130,80 @@ AppBuilder.register("uploadfile", function (exports) {
       e.stopPropagation();
     });
 
-    const fileData = {};
     const dataSource = [];
-    let filesSize = 0;
     uploadArea.on("drop", function (e) {
       console.log(e);
       e.preventDefault();
       e.stopPropagation();
-      var files = e.originalEvent.dataTransfer.files;
+      const files = e.originalEvent.dataTransfer.files;
       console.log(files);
+
       for (let key in files) {
-        console.log(files);
         if (
           dataSource.length < config.MaxFilesAmount &&
-          filesSize + files[key].size < config.MaxFilesWeight * 1024 * 1024
+          files[key].size < config.MaxFilesWeight * 1024 * 1024
         ) {
           const file = files[0];
-          const reader = new FileReader();
-          reader.onload = function (e) {
-            var content = e.target.result;
+          const fileAlreadyExists = (string, array) => {
+            return array.some((obj) => Object.values(obj).includes(string));
+          };
+
+          if (!fileAlreadyExists(files[key].name, dataSource)) {
+            const fileData = {};
             fileData.name = files[key].name;
             fileData.ID = Math.random();
             fileData.size = files[key].size;
-            fileData.data = `<FileEnvelope><FileName>${fileData.name}</FileName><FileContent>${content}</FileContent></FileEnvelope>`;
-
+            element.find(".files")
+              .append(`<li class="list-item"title="${fileData.ID}">
+								<p class="item" >${fileData.name}</p>
+								<span class="delete">&#128937;</span>
+							</li>`);
             dataSource.push(fileData);
             console.log(dataSource);
-
             instance.datasources.push(fileData.data);
             console.log(instance.datasources);
 
-            filesSize += fileData.size;
-            console.log(filesSize);
-            element.find(".files")
-              .append(`<li class="list-item"title="${fileData.ID}">
-							<p class="item" >${fileData.name}</p>
-							<p class="delete">&#128937;</p>
-						</li>`);
+            const reader = new FileReader();
+            reader.onload = function (e) {
+              var content = e.target.result;
+              fileData.data = content;
+              // instance.datasources.push(content);
+              // console.log(instance.datasources);
+            };
+            reader.readAsBinaryString(file);
+          }
 
-            let listElement = document.querySelectorAll(".list-item");
-            removeFile(listElement);
-          };
-          reader.readAsBinaryString(file);
+          let listElement = document.querySelectorAll(".list-item");
+          removeFile(listElement);
+        }
+        if (dataSource.length >= config.MaxFilesAmount) {
+          console.log("Count");
+        }
+        if (files[key].size >= config.MaxFilesWeight * 1024 * 1024) {
+          console.log("Weight");
         }
       }
     });
 
     function removeFile(listElement) {
       function removeElement() {
-        console.log(dataSource);
+        for (let i = 0; i < dataSource.length; i++) {
+          if (dataSource[i].ID == $(this).parent().attr("title")) {
+            console.log($(this).parent());
 
-        var p = $(this).parent();
-        console.log(p);
+            console.log(dataSource[i].size);
 
-        var a = p.attr("title");
-        console.log(a);
+            dataSource.splice(i, 1);
+            console.log(dataSource);
 
-        try {
-          for (let i = 0; i < dataSource.length; i++) {
-            if (dataSource[i].ID == $(this).parent().attr("title")) {
-              console.log($(this).parent());
-
-              console.log(dataSource[i].size);
-              filesSize -= dataSource[i].size;
-              console.log(filesSize);
-
-              dataSource.splice(i, 1);
-              console.log(dataSource);
-
-              instance.datasources.splice(i, 1);
-              console.log(instance.datasources);
-            }
+            instance.datasources.splice(i, 1);
+            console.log(instance.datasources);
           }
-        } catch (error) {
-          console.error(error);
         }
         $(this).parent().remove();
-        console.log($(this).parent());
       }
-
       listElement.forEach(function (el) {
         el.querySelector(".delete").onclick = removeElement;
-        console.log(el);
       });
     }
 
@@ -224,39 +213,50 @@ AppBuilder.register("uploadfile", function (exports) {
     uploadClick.on("change", (e) => {
       var files = e.target.files;
       console.log(files);
+      const fileData = {};
       for (let key in files) {
-        console.log(files);
-        console.log(dataSource);
         if (
           dataSource.length < config.MaxFilesAmount &&
-          filesSize + files[key].size < config.MaxFilesWeight * 1024 * 1024
+          files[key].size < config.MaxFilesWeight * 1024 * 1024
         ) {
           const file = files[0];
-          const reader = new FileReader();
-          reader.onload = function (e) {
-            var content = e.target.result;
+          const fileAlreadyExists = (string, array) => {
+            return array.some((obj) => Object.values(obj).includes(string));
+          };
+
+          if (!fileAlreadyExists(files[key].name, dataSource)) {
+            const fileData = {};
             fileData.name = files[key].name;
             fileData.ID = Math.random();
             fileData.size = files[key].size;
-            fileData.data = `<FileEnvelope><FileName>${fileData.name}</FileName><FileContent>${content}</FileContent></FileEnvelope>`;
-
+            element.find(".files")
+              .append(`<li class="list-item"title="${fileData.ID}">
+								<p class="item" >${fileData.name}</p>
+								<span class="delete">&#128937;</span>
+							</li>`);
             dataSource.push(fileData);
             console.log(dataSource);
             instance.datasources.push(fileData.data);
             console.log(instance.datasources);
 
-            filesSize += fileData.size;
-            console.log(filesSize);
-            element.find(".files")
-              .append(`<li class="list-item"title="${fileData.ID}">
-							<p class="item" >${fileData.name}</p>
-							<p class="delete">&#128937;</p>
-						</li>`);
+            const reader = new FileReader();
+            reader.onload = function (e) {
+              var content = e.target.result;
+              fileData.data = content;
+              // instance.datasources.push(content);
+              // console.log(instance.datasources);
+            };
+            reader.readAsBinaryString(file);
+          }
 
-            let listElement = document.querySelectorAll(".list-item");
-            removeFile(listElement);
-          };
-          reader.readAsBinaryString(file);
+          let listElement = document.querySelectorAll(".list-item");
+          removeFile(listElement);
+        }
+        if (dataSource.length >= config.MaxFilesAmount) {
+          console.log("Count");
+        }
+        if (files[key].size >= config.MaxFilesWeight * 1024 * 1024) {
+          console.log("Weight");
         }
       }
     });
@@ -276,7 +276,7 @@ AppBuilder.register("uploadfile", function (exports) {
     };
 
     var dropCodeToBeCalled = function () {
-      element.find(".dropbox-button").on("click", function () {
+      dropBoxButton.on("click", function () {
         Dropbox.choose({
           multiselect: true,
           folderselect: false,
@@ -287,27 +287,41 @@ AppBuilder.register("uploadfile", function (exports) {
             for (let file of files) {
               if (
                 dataSource.length < config.MaxFilesAmount &&
-                filesSize + file.bytes < config.MaxFilesWeight * 1024 * 1024
+                file.bytes < config.MaxFilesWeight * 1024 * 1024
               ) {
-                fileData.name = file.name;
-                fileData.ID = Math.random();
-                fileData.size = file.bytes;
-                console.log(fileData);
-                element.find(".files")
-                  .append(`<li class="list-item"title="${fileData.ID}">
-									<p class="item" >${fileData.name}</p>
-									<p class="delete">&#128937;</p>
-								</li>`);
+                const fileData = {};
+                const fileAlreadyExists = (string, array) => {
+                  return array.some((obj) =>
+                    Object.values(obj).includes(string)
+                  );
+                };
 
+                if (!fileAlreadyExists(file.name, dataSource)) {
+                  fileData.name = file.name;
+                  fileData.ID = Math.random();
+                  fileData.size = file.bytes;
+                  console.log(fileData);
+                  element.find(".files")
+                    .append(`<li class="list-item"title="${fileData.ID}">
+										<p class="item" >${fileData.name}</p>
+										<span class="delete">&#128937;</span>
+									</li>`);
+                }
                 fetch(file.link)
                   .then((response) => response.arrayBuffer())
                   .then((data) => {
-                    fileData.data = data;
-                    dataSource.push(fileData);
-                    console.log(file);
-                    console.log(data);
-                    console.log(dataSource);
+                    const fileAlreadyExists = (string, array) => {
+                      return array.some((obj) =>
+                        Object.values(obj).includes(string)
+                      );
+                    };
 
+                    if (!fileAlreadyExists(file.name, dataSource)) {
+                      fileData.data = data;
+                      dataSource.push(fileData);
+                      console.log(dataSource);
+                      instance.datasources.push(fileData);
+                    }
                     let listElement = document.querySelectorAll(".list-item");
                     removeFile(listElement);
                   });
@@ -369,13 +383,18 @@ AppBuilder.register("uploadfile", function (exports) {
             }
           );
       }
+
+      function authenticateLoadClient() {
+        authenticate().then(loadClient);
+      }
+
       gapi.load("client:auth2", function () {
         gapi.auth2.init({
           client_id:
             "903907170385-rim71tdktoi5ei260cr0pkcvde6eh7r0.apps.googleusercontent.com",
         });
       });
-      googleButton.on("click", authenticate);
+      googleButton.on("click", authenticateLoadClient);
     };
     loadGoogleJS(
       "https://apis.google.com/js/api.js",

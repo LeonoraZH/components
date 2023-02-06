@@ -352,7 +352,6 @@ AppBuilder.register("uploadfile", function (exports) {
       scriptTag2.setAttribute("id", "googlepickjs");
 
       scriptTag2.onload = implementationCode;
-      scriptTag2.onreadystatechange = implementationCode;
 
       location.appendChild(scriptTag1);
       location.appendChild(scriptTag2);

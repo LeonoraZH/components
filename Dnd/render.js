@@ -339,28 +339,20 @@ AppBuilder.register("uploadfile", function (exports) {
 
     // Google Drive
 
-    var loadGoogleJS = function () {
-      // window.addEventListener("load", function () {
-      var scriptTag1 = document.createElement("script");
-      scriptTag1.src = "https://apis.google.com/js/api.js?onload=onApiLoad";
-      scriptTag1.setAttribute("type", "text/javascript");
-      scriptTag1.setAttribute("id", "googlepickjs");
+    // window.addEventListener("load", function () {
+    var scriptTag1 = document.createElement("script");
+    scriptTag1.src = "https://apis.google.com/js/api.js?onload=onApiLoad";
+    scriptTag1.setAttribute("type", "text/javascript");
+    scriptTag1.setAttribute("id", "googlepickjs");
 
-      var scriptTag2 = document.createElement("script");
-      scriptTag2.src = "https://accounts.google.com/gsi/client";
-      scriptTag2.setAttribute("type", "text/javascript");
-      scriptTag2.setAttribute("id", "googlepickjs");
+    var scriptTag2 = document.createElement("script");
+    scriptTag2.src = "https://accounts.google.com/gsi/client";
+    scriptTag2.setAttribute("type", "text/javascript");
+    scriptTag2.setAttribute("id", "googlepickjs");
 
-      document.body.appendChild(scriptTag1);
-      document.body.appendChild(scriptTag2);
-      // });
-    };
-    function gaccLoaded() {
-      setTimeout(function () {
-        loadGoogleJS();
-      }, 1000);
-    }
-    gaccLoaded();
+    document.body.appendChild(scriptTag1);
+    document.body.appendChild(scriptTag2);
+    // });
 
     // var googleCodeToBeCalled = function(){
 

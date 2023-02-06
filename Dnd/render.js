@@ -49,6 +49,10 @@ AppBuilder.register("uploadfile", function (exports) {
     var dropBoxButton = element.find(".dropbox-button");
     var googleButton = element.find(".google-button");
 
+    console.log(config.FileExtension);
+    var extensions = config.FileExtension.split(",");
+    console.log(config.TextValue);
+    uploadClick.attr("accept", config.FileExtension);
     config.TextValue && text.html(config.TextValue);
     config.FillColor
       ? uploadArea.css("background-color", config.FillColor)
@@ -82,7 +86,6 @@ AppBuilder.register("uploadfile", function (exports) {
     if (config.BtnHideDropBox) dropBoxButton.css("display", "none");
     if (config.BtnHideGoogle) googleButton.css("display", "none");
 
-    config.Label = instance.translate(config.CtrlName);
     config.Label && label.html(config.Label);
     config.NoLabel && label.aclass("novisible");
     if (config.NoLabel)
@@ -132,55 +135,57 @@ AppBuilder.register("uploadfile", function (exports) {
 
     const dataSource = [];
     uploadArea.on("drop", function (e) {
-      console.log(e);
       e.preventDefault();
       e.stopPropagation();
       const files = e.originalEvent.dataTransfer.files;
-      console.log(files);
 
       for (let key in files) {
-        if (
-          dataSource.length < config.MaxFilesAmount &&
-          files[key].size < config.MaxFilesWeight * 1024 * 1024
-        ) {
-          const file = files[0];
-          const fileAlreadyExists = (string, array) => {
-            return array.some((obj) => Object.values(obj).includes(string));
-          };
+        if (files[key].name && files[key].lastModified) {
+          const fileExtension = "." + files[key].name.split(".").pop();
+          if (extensions.includes(fileExtension)) {
+            if (dataSource.length < config.MaxFilesCount) {
+              if (files[key].size < config.MaxFileWeight * 1024 * 1024) {
+                const file = files[key];
+                const fileAlreadyExists = (string, array) => {
+                  return array.some((obj) =>
+                    Object.values(obj).includes(string)
+                  );
+                };
 
-          if (!fileAlreadyExists(files[key].name, dataSource)) {
-            const fileData = {};
-            fileData.name = files[key].name;
-            fileData.ID = Math.random();
-            fileData.size = files[key].size;
-            element.find(".files")
-              .append(`<li class="list-item"title="${fileData.ID}">
-								<p class="item" >${fileData.name}</p>
-								<span class="delete">&#128937;</span>
-							</li>`);
-            dataSource.push(fileData);
-            console.log(dataSource);
-            instance.datasources.push(fileData.data);
-            console.log(instance.datasources);
+                if (!fileAlreadyExists(files[key].name, dataSource)) {
+                  const fileData = {};
+                  fileData.name = files[key].name;
+                  fileData.ID = Math.random();
+                  fileData.size = files[key].size;
+                  element.find(".files")
+                    .append(`<li class="list-item"title="${fileData.ID}">
+										<p class="item" >${fileData.name}</p>
+										<span class="delete">&#128937;</span>
+									</li>`);
+                  dataSource.push(fileData);
+                  console.log(dataSource);
 
-            const reader = new FileReader();
-            reader.onload = function (e) {
-              var content = e.target.result;
-              fileData.data = content;
-              // instance.datasources.push(content);
-              // console.log(instance.datasources);
-            };
-            reader.readAsBinaryString(file);
+                  const reader = new FileReader();
+                  reader.onload = function (e) {
+                    var content = e.target.result;
+                    instance.datasources.push(content);
+                    console.log(instance.datasources);
+                  };
+                  reader.readAsBinaryString(file);
+                } else SETTER("message/warning", config.RepeatWarning);
+
+                let listElement = document.querySelectorAll(".list-item");
+                removeFile(listElement);
+              } else {
+                SETTER("message/warning", config.WeightWarning);
+              }
+            } else {
+              SETTER("message/warning", config.CountWarning);
+            }
+          } else {
+            console.log(extensions);
+            SETTER("message/warning", config.ExtWarning);
           }
-
-          let listElement = document.querySelectorAll(".list-item");
-          removeFile(listElement);
-        }
-        if (dataSource.length >= config.MaxFilesAmount) {
-          console.log("Count");
-        }
-        if (files[key].size >= config.MaxFilesWeight * 1024 * 1024) {
-          console.log("Weight");
         }
       }
     });
@@ -215,48 +220,44 @@ AppBuilder.register("uploadfile", function (exports) {
       console.log(files);
       const fileData = {};
       for (let key in files) {
-        if (
-          dataSource.length < config.MaxFilesAmount &&
-          files[key].size < config.MaxFilesWeight * 1024 * 1024
-        ) {
-          const file = files[0];
-          const fileAlreadyExists = (string, array) => {
-            return array.some((obj) => Object.values(obj).includes(string));
-          };
+        if (files[key].name && files[key].lastModified) {
+          if (dataSource.length < config.MaxFilesCount) {
+            if (files[key].size <= config.MaxFileWeight * 1024 * 1024) {
+              const file = files[key];
+              const fileAlreadyExists = (string, array) => {
+                return array.some((obj) => Object.values(obj).includes(string));
+              };
 
-          if (!fileAlreadyExists(files[key].name, dataSource)) {
-            const fileData = {};
-            fileData.name = files[key].name;
-            fileData.ID = Math.random();
-            fileData.size = files[key].size;
-            element.find(".files")
-              .append(`<li class="list-item"title="${fileData.ID}">
-								<p class="item" >${fileData.name}</p>
-								<span class="delete">&#128937;</span>
-							</li>`);
-            dataSource.push(fileData);
-            console.log(dataSource);
-            instance.datasources.push(fileData.data);
-            console.log(instance.datasources);
+              if (!fileAlreadyExists(files[key].name, dataSource)) {
+                const fileData = {};
+                fileData.name = files[key].name;
+                fileData.ID = Math.random();
+                fileData.size = files[key].size;
+                element.find(".files")
+                  .append(`<li class="list-item"title="${fileData.ID}">
+									<p class="item" >${fileData.name}</p>
+									<span class="delete">&#128937;</span>
+								</li>`);
+                dataSource.push(fileData);
+                console.log(dataSource);
 
-            const reader = new FileReader();
-            reader.onload = function (e) {
-              var content = e.target.result;
-              fileData.data = content;
-              // instance.datasources.push(content);
-              // console.log(instance.datasources);
-            };
-            reader.readAsBinaryString(file);
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                  var content = e.target.result;
+                  instance.datasources.push(content);
+                  console.log(instance.datasources);
+                };
+                reader.readAsBinaryString(file);
+              } else SETTER("message/warning", config.RepeatWarning);
+
+              let listElement = document.querySelectorAll(".list-item");
+              removeFile(listElement);
+            } else {
+              SETTER("message/warning", config.WeightWarning);
+            }
+          } else {
+            SETTER("message/warning", config.CountWarning);
           }
-
-          let listElement = document.querySelectorAll(".list-item");
-          removeFile(listElement);
-        }
-        if (dataSource.length >= config.MaxFilesAmount) {
-          console.log("Count");
-        }
-        if (files[key].size >= config.MaxFilesWeight * 1024 * 1024) {
-          console.log("Weight");
         }
       }
     });
@@ -281,14 +282,14 @@ AppBuilder.register("uploadfile", function (exports) {
           multiselect: true,
           folderselect: false,
           linkType: "direct",
+          sizeLimit: config.MaxFileWeight * 1024 * 1024,
+          extensions: extensions,
 
           success: function (files) {
             console.log(files);
             for (let file of files) {
-              if (
-                dataSource.length < config.MaxFilesAmount &&
-                file.bytes < config.MaxFilesWeight * 1024 * 1024
-              ) {
+              if (dataSource.length < config.MaxFilesCount) {
+                console.log(dataSource);
                 const fileData = {};
                 const fileAlreadyExists = (string, array) => {
                   return array.some((obj) =>
@@ -301,30 +302,29 @@ AppBuilder.register("uploadfile", function (exports) {
                   fileData.ID = Math.random();
                   fileData.size = file.bytes;
                   console.log(fileData);
+                  dataSource.push(fileData);
+                  console.log(dataSource);
+
                   element.find(".files")
                     .append(`<li class="list-item"title="${fileData.ID}">
 										<p class="item" >${fileData.name}</p>
 										<span class="delete">&#128937;</span>
 									</li>`);
-                }
-                fetch(file.link)
-                  .then((response) => response.arrayBuffer())
-                  .then((data) => {
-                    const fileAlreadyExists = (string, array) => {
-                      return array.some((obj) =>
-                        Object.values(obj).includes(string)
-                      );
-                    };
+                  fetch(file.link)
+                    .then((response) => response.arrayBuffer())
+                    .then((data) => {
+                      console.log(data);
 
-                    if (!fileAlreadyExists(file.name, dataSource)) {
                       fileData.data = data;
-                      dataSource.push(fileData);
-                      console.log(dataSource);
-                      instance.datasources.push(fileData);
-                    }
-                    let listElement = document.querySelectorAll(".list-item");
-                    removeFile(listElement);
-                  });
+                      instance.datasources.push(data);
+                      console.log(instance.datasources);
+
+                      let listElement = document.querySelectorAll(".list-item");
+                      removeFile(listElement);
+                    });
+                } else SETTER("message/warning", config.RepeatWarning);
+              } else {
+                SETTER("message/warning", config.CountWarning);
               }
             }
           },
@@ -340,67 +340,122 @@ AppBuilder.register("uploadfile", function (exports) {
 
     // Google Drive
 
-    var loadGoogleJS = function (url, implementationCode, location) {
-      var scriptTag = document.createElement("script");
-      scriptTag.src = url;
+    var loadGoogleJS = function (implementationCode, location) {
+      var scriptTag1 = document.createElement("script");
+      scriptTag1.src = "https://apis.google.com/js/api.js?onload=onApiLoad";
+      scriptTag1.setAttribute("type", "text/javascript");
+      scriptTag1.setAttribute("id", "googlepickjs");
 
-      scriptTag.onload = implementationCode;
-      scriptTag.onreadystatechange = implementationCode;
+      var scriptTag2 = document.createElement("script");
+      scriptTag2.src = "https://accounts.google.com/gsi/client";
+      scriptTag2.setAttribute("type", "text/javascript");
+      scriptTag2.setAttribute("id", "googlepickjs");
 
-      location.appendChild(scriptTag);
+      scriptTag2.onload = implementationCode;
+      scriptTag2.onreadystatechange = implementationCode;
+
+      location.appendChild(scriptTag1);
+      location.appendChild(scriptTag2);
     };
 
     var googleCodeToBeCalled = function () {
-      function authenticate() {
-        console.log("Google");
-        return gapi.auth2
-          .getAuthInstance()
-          .signIn({
-            scope:
-              "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.metadata https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/drive.photos.readonly https://www.googleapis.com/auth/drive.readonly",
-          })
-          .then(
-            function () {
-              console.log("Sign-in successful");
-            },
-            function (err) {
-              console.error("Error signing in", err);
-            }
-          );
+      function onApiLoad() {
+        gapi.load("client:picker", onPickerApiLoad);
       }
-      function loadClient() {
-        gapi.client.setApiKey("AIzaSyDthIiy1vMquT6zV-XqMox5vskZ6QnoxVI");
-        return gapi.client
-          .load(
-            "https://content.googleapis.com/discovery/v1/apis/drive/v3/rest"
-          )
-          .then(
-            function () {
-              console.log("GAPI client loaded for API");
-            },
-            function (err) {
-              console.error("Error loading GAPI client for API", err);
-            }
-          );
+      async function onPickerApiLoad() {
+        await gapi.client.load(
+          "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"
+        ),
+          (pickerInited = !0);
       }
-
-      function authenticateLoadClient() {
-        authenticate().then(loadClient);
+      function gaccLoaded() {
+        setTimeout(function () {
+          gaccInited = !0;
+        }, 200);
       }
-
-      gapi.load("client:auth2", function () {
-        gapi.auth2.init({
+      function createPicker() {
+        tokenClient = google.accounts.oauth2.initTokenClient({
           client_id:
             "903907170385-rim71tdktoi5ei260cr0pkcvde6eh7r0.apps.googleusercontent.com",
+          scope:
+            "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly",
+          callback: "",
         });
+        const e = () => {
+          new google.picker.PickerBuilder()
+            .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
+            .addView(google.picker.ViewId.DOCS)
+            .setOAuthToken(accessToken)
+            //.setDeveloperKey("AIzaSyArjLBoYN0w9ExNSFfFBWcKX63WmLVSHAo")
+            .setMaxItems(10)
+            .setCallback(pickerCallback)
+            .build()
+            .setVisible(true);
+        };
+        (tokenClient.callback = async (o) => {
+          o.error !== undefined
+            ? console.log(
+                "There was an error connecting to your Google Drive, please try again."
+              )
+            : o.scope.includes("https://www.googleapis.com/auth/drive.readonly")
+            ? ((accessToken = o.access_token), e())
+            : console.log(
+                "You must confirm additional permissions to upload to Google Drive, please try again."
+              );
+        }),
+          null === accessToken
+            ? tokenClient.requestAccessToken({ prompt: "consent" })
+            : tokenClient.requestAccessToken({ prompt: "" });
+      }
+      function pickerCallback(e) {
+        console.log(e);
+        e.action == google.picker.Action.PICKED &&
+          ((cancelled = !1),
+          $.each(e[google.picker.Response.DOCUMENTS], function (e, o) {
+            var i = Math.random();
+            (allFilesFinished[i] = !1), (o.randomId = i);
+          }),
+          $.each(e[google.picker.Response.DOCUMENTS], function (e, o) {
+            // checkWhiteList(o.name, filetypes)
+            //   ? gdriveUpload(e, o)
+            //   : (postFailedUpload(o.name, 0, "unsupported filetype"),
+            console.log("callback");
+          }));
+      }
+      const filetypes = ".pdf";
+      function postFailedUpload(e, o, i) {
+        (extension = e.split(".").pop()),
+          $.ajax({
+            url: "/failed_uploads",
+            type: "POST",
+            data: {
+              failed_upload: {
+                name: e,
+                extension: extension,
+                size: o,
+                error: i,
+              },
+            },
+            dataType: "json",
+          });
+      }
+      var cancelled = !1,
+        allFilesFinished = {},
+        percentage = 0;
+      let tokenClient,
+        accessToken = null,
+        pickerInited = !1,
+        gaccInited = !1;
+
+      googleButton.on("click", function (e) {
+        e.preventDefault(), createPicker();
       });
-      googleButton.on("click", authenticateLoadClient);
+      // checkWhiteList = function (e, o) {
+      // var i = e.toLowerCase();
+      // return new RegExp("(" + o.join("|").replace(/\./g, "\\.") + ")$").test(i);
+      // };
     };
-    loadGoogleJS(
-      "https://apis.google.com/js/api.js",
-      googleCodeToBeCalled,
-      document.body
-    );
+    loadGoogleJS(googleCodeToBeCalled, document.body);
 
     instance.on("ready", function () {});
   };

@@ -118,6 +118,98 @@ AppBuilder.register("uploadfile", function (exports) {
     config.FilesFontSize && del.css("font-size", config.FilesFontSize);
     console.log(config.FilesFontSize);
 
+    var pendingReads = 0;
+
+    function onLoadStart() {
+      pendingReads++;
+    }
+
+    function onLoadComplete() {
+      if (--pendingReads == 0) updateData();
+    }
+
+    function updateData() {
+      var data = [];
+      for (let fileData of allData) {
+        data = data.concat(getInt64Bytes(fileData.byteLength));
+        data = data.concat(fileData);
+      }
+      console.log(data);
+      instance.updateValue(data);
+    }
+
+    const allData = [];
+    const dataSource = [];
+    function processFile(file) {
+      const fileData = {};
+      fileData.name = file.name;
+      fileData.ID = Math.random();
+      fileData.size = file.size;
+      element.find(".files")
+        .append(`<li class="list-item"title="${fileData.ID}">
+				<p class="item" >${fileData.name}</p>
+				<span class="delete">&#128937;</span>
+			</li>`);
+      dataSource.push(fileData);
+      console.log(dataSource);
+
+      const reader = new FileReader();
+      reader.onerror = function (e) {
+        onLoadComplete();
+      };
+      reader.onload = function (e) {
+        var content = e.target.result;
+        allData.push(content);
+
+        onLoadComplete();
+      };
+      onLoadStart();
+      reader.readAsArrayBuffer(file);
+      console.log(allData);
+
+      let listElement = document.querySelectorAll(".list-item");
+      removeFile(listElement);
+    }
+
+    function allowedExtension(name) {
+      const fileExtension = "." + name.split(".").pop();
+      return !extensions || extensions.includes(fileExtension);
+    }
+    function fileAlreadyExists(string, array) {
+      return array.some((obj) => Object.values(obj).includes(string));
+    }
+
+    function removeFile(listElement) {
+      function removeElement() {
+        for (let i = 0; i < dataSource.length; i++) {
+          if (dataSource[i].ID == $(this).parent().attr("title")) {
+            console.log($(this).parent());
+
+            console.log(dataSource[i].size);
+
+            dataSource.splice(i, 1);
+            console.log(dataSource);
+
+            allData.splice(i, 1);
+            console.log(allData);
+
+            var tempAllData = [];
+            for (let data of allData) {
+              var u8data = new Uint8Array(data);
+              tempAllData = tempAllData.concat(getInt64Bytes(u8data.length));
+              tempAllData = tempAllData.concat(Array.from(u8data));
+            }
+            console.log(tempAllData);
+            instance.updateValue(tempAllData);
+          }
+        }
+        $(this).parent().remove();
+      }
+      listElement.forEach(function (el) {
+        el.querySelector(".delete").onclick = removeElement;
+      });
+    }
+
     // file upload
 
     uploadArea.on("dragenter", function (e) {
@@ -135,103 +227,38 @@ AppBuilder.register("uploadfile", function (exports) {
       e.preventDefault();
       e.stopPropagation();
     });
-    const allData = [];
-    const dataSource = [];
+
     uploadArea.on("drop", function (e) {
       e.preventDefault();
       e.stopPropagation();
       const files = e.originalEvent.dataTransfer.files;
 
+      onLoadStart();
+
       for (let key in files) {
-        if (files[key].name && files[key].lastModified) {
-          const fileExtension = "." + files[key].name.split(".").pop();
-          if (!extensions || extensions.includes(fileExtension)) {
-            if (dataSource.length < config.MaxFilesCount) {
-              if (files[key].size < config.MaxFileWeight * 1024 * 1024) {
-                const file = files[key];
-                const fileAlreadyExists = (string, array) => {
-                  return array.some((obj) =>
-                    Object.values(obj).includes(string)
-                  );
-                };
-
-                if (!fileAlreadyExists(files[key].name, dataSource)) {
-                  const fileData = {};
-                  fileData.name = files[key].name;
-                  fileData.ID = Math.random();
-                  fileData.size = files[key].size;
-                  element.find(".files")
-                    .append(`<li class="list-item"title="${fileData.ID}">
-										<p class="item" >${fileData.name}</p>
-										<span class="delete">&#128937;</span>
-									</li>`);
-                  dataSource.push(fileData);
-                  console.log(dataSource);
-
-                  const reader = new FileReader();
-                  reader.onload = function (e) {
-                    var content = e.target.result;
-                    allData.push(content);
-                    console.log(allData);
-                    var tempAllData = [];
-                    for (let i of allData) {
-                      tempAllData = tempAllData.concat(
-                        getInt64Bytes(i.byteLength)
-                      );
-                      tempAllData = tempAllData.concat(i);
-                    }
-                    console.log(tempAllData);
-                    instance.updateValue(tempAllData);
-                  };
-                  reader.readAsArrayBuffer(file);
-                  // reader.readAsBinaryString(file);
-                } else SETTER("message/warning", config.RepeatWarning);
-
-                let listElement = document.querySelectorAll(".list-item");
-                removeFile(listElement);
-              } else {
-                SETTER("message/warning", config.WeightWarning);
-              }
-            } else {
-              SETTER("message/warning", config.CountWarning);
-            }
-          } else {
-            console.log(extensions);
+        const file = files[key];
+        if (file.name && file.lastModified) {
+          if (!allowedExtension(file.name)) {
             SETTER("message/warning", config.ExtWarning);
+            continue;
           }
+          if (dataSource.length >= config.MaxFilesCount) {
+            SETTER("message/warning", config.CountWarning);
+            continue;
+          }
+          if (file.size >= config.MaxFileWeight * 1024 * 1024) {
+            SETTER("message/warning", config.WeightWarning);
+            continue;
+          }
+          if (fileAlreadyExists(file.name, dataSource)) {
+            SETTER("message/warning", config.RepeatWarning);
+            continue;
+          }
+          processFile(file);
         }
+        onLoadComplete();
       }
     });
-
-    function removeFile(listElement) {
-      function removeElement() {
-        for (let i = 0; i < dataSource.length; i++) {
-          if (dataSource[i].ID == $(this).parent().attr("title")) {
-            console.log($(this).parent());
-
-            console.log(dataSource[i].size);
-
-            dataSource.splice(i, 1);
-            console.log(dataSource);
-
-            allData.splice(i, 1);
-            console.log(allData);
-
-            var tempAllData = [];
-            for (let i of allData) {
-              tempAllData = tempAllData.concat(getInt64Bytes(i.byteLength));
-              tempAllData = tempAllData.concat(i);
-            }
-            console.log(tempAllData);
-            instance.updateValue(tempAllData);
-          }
-        }
-        $(this).parent().remove();
-      }
-      listElement.forEach(function (el) {
-        el.querySelector(".delete").onclick = removeElement;
-      });
-    }
 
     // Lile upload button
 
@@ -240,6 +267,7 @@ AppBuilder.register("uploadfile", function (exports) {
       var files = e.target.files;
       console.log(files);
       const fileData = {};
+
       for (let key in files) {
         if (files[key].name && files[key].lastModified) {
           if (dataSource.length < config.MaxFilesCount) {
@@ -267,18 +295,9 @@ AppBuilder.register("uploadfile", function (exports) {
                   var content = e.target.result;
                   allData.push(content);
                   console.log(allData);
-
-                  var tempAllData = [];
-                  for (let i of allData) {
-                    tempAllData = tempAllData.concat(
-                      getInt64Bytes(i.byteLength)
-                    );
-                    tempAllData = tempAllData.concat(i);
-                  }
-                  console.log(tempAllData);
-                  instance.updateValue(tempAllData);
                 };
                 reader.readAsArrayBuffer(file);
+                console.log(allData);
               } else SETTER("message/warning", config.RepeatWarning);
 
               let listElement = document.querySelectorAll(".list-item");
@@ -289,6 +308,16 @@ AppBuilder.register("uploadfile", function (exports) {
           } else {
             SETTER("message/warning", config.CountWarning);
           }
+          console.log(allData);
+          var tempAllData = [];
+          for (let data of allData) {
+            console.log(data);
+            var u8data = new Uint8Array(data);
+            tempAllData = tempAllData.concat(getInt64Bytes(u8data.length));
+            tempAllData = tempAllData.concat(Array.from(u8data));
+          }
+          console.log(tempAllData);
+          instance.updateValue(tempAllData);
         }
       }
     });

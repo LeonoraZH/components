@@ -157,7 +157,6 @@ AppBuilder.register("uploadfile", function (exports) {
 				<span class="delete">&#128937;</span>
 			</li>`);
       dataSource.push(fileData);
-      log(dataSource);
 
       const reader = new FileReader();
       reader.onerror = function (e) {
@@ -195,8 +194,6 @@ AppBuilder.register("uploadfile", function (exports) {
       fetch(file.link)
         .then((response) => response.arrayBuffer())
         .then((data) => {
-          log(data);
-
           fileData.data = data;
           allData.push(data);
           log(allData);
@@ -214,6 +211,34 @@ AppBuilder.register("uploadfile", function (exports) {
 
     function fileAlreadyExists(string, array) {
       return array.some((obj) => Object.values(obj).includes(string));
+    }
+
+    function conditions(files, extensionCondition = true) {
+      onLoadStart();
+
+      for (var i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (extensionCondition) {
+          if (!allowedExtension(file.name)) {
+            SETTER("message/warning", config.ExtWarning);
+            continue;
+          }
+        }
+        if (dataSource.length >= config.MaxFilesCount) {
+          SETTER("message/warning", config.CountWarning);
+          continue;
+        }
+        if (file.size >= config.MaxFileWeight * 1024 * 1024) {
+          SETTER("message/warning", config.WeightWarning);
+          continue;
+        }
+        if (fileAlreadyExists(file.name, dataSource)) {
+          SETTER("message/warning", config.RepeatWarning);
+          continue;
+        }
+        processFile(file);
+      }
+      onLoadComplete();
     }
 
     function removeFile(listElement) {
@@ -245,7 +270,6 @@ AppBuilder.register("uploadfile", function (exports) {
     // file upload
 
     uploadArea.on("dragenter", function (e) {
-      log("dragenter");
       e.preventDefault();
       e.stopPropagation();
     });
@@ -264,61 +288,16 @@ AppBuilder.register("uploadfile", function (exports) {
       e.preventDefault();
       e.stopPropagation();
       const files = e.originalEvent.dataTransfer.files;
-      log(files);
 
-      onLoadStart();
-
-      for (var i = 0; i < files.length; i++) {
-        const file = files[i];
-
-        if (!allowedExtension(file.name)) {
-          SETTER("message/warning", config.ExtWarning);
-          continue;
-        }
-        if (dataSource.length >= config.MaxFilesCount) {
-          SETTER("message/warning", config.CountWarning);
-          continue;
-        }
-        if (file.size >= config.MaxFileWeight * 1024 * 1024) {
-          SETTER("message/warning", config.WeightWarning);
-          continue;
-        }
-        if (fileAlreadyExists(file.name, dataSource)) {
-          SETTER("message/warning", config.RepeatWarning);
-          continue;
-        }
-        processFile(file);
-      }
-      onLoadComplete();
+      conditions(files);
     });
 
     // Lile upload button
 
-    log(uploadClick);
     uploadClick.on("change", (e) => {
       var files = e.target.files;
-      log(files);
 
-      onLoadStart();
-
-      for (var i = 0; i < files.length; i++) {
-        const file = files[i];
-
-        if (dataSource.length >= config.MaxFilesCount) {
-          SETTER("message/warning", config.CountWarning);
-          continue;
-        }
-        if (file.size >= config.MaxFileWeight * 1024 * 1024) {
-          SETTER("message/warning", config.WeightWarning);
-          continue;
-        }
-        if (fileAlreadyExists(file.name, dataSource)) {
-          SETTER("message/warning", config.RepeatWarning);
-          continue;
-        }
-        processFile(file);
-      }
-      onLoadComplete();
+      conditions(files, false);
     });
 
     // Dropbox
@@ -423,8 +402,6 @@ AppBuilder.register("uploadfile", function (exports) {
       log(e);
       e.action == google.picker.Action.PICKED &&
         ((cancelled = !1),
-        log("callback1111"),
-        log(e),
         $.each(e[google.picker.Response.DOCUMENTS], function (e, o) {
           if (allowedExtension(o.name)) {
             if (!fileAlreadyExists(o.name, dataSource)) {
@@ -434,9 +411,7 @@ AppBuilder.register("uploadfile", function (exports) {
             } else SETTER("message/warning", config.RepeatWarning);
           } else SETTER("message/warning", config.ExtWarning);
         }),
-        $.each(e[google.picker.Response.DOCUMENTS], function (e, o) {
-          // log(e);
-        }));
+        $.each(e[google.picker.Response.DOCUMENTS], function (e, o) {}));
     }
 
     var cancelled = !1;

@@ -32,6 +32,7 @@ AppBuilder.register("uploadfile", function (exports) {
 						</button>
 					</div>
 				</div>
+				<p>${config.FilesInfo} ${config.MaxFilesCount}; ${config.MaxFileWeight} MB; ${config.FileExtension} </p>
 				<ul class="files"></ul>
 			</div>
 		`);
@@ -49,8 +50,10 @@ AppBuilder.register("uploadfile", function (exports) {
     var dropBoxButton = element.find(".dropbox-button");
     var googleButton = element.find(".google-button");
 
+    var extensions;
     console.log(config.FileExtension);
-    var extensions = config.FileExtension.split(",");
+    if (config.FileExtension) extensions = config.FileExtension.split(",");
+
     console.log(config.TextValue);
     uploadClick.attr("accept", config.FileExtension);
     config.TextValue && text.html(config.TextValue);
@@ -132,7 +135,7 @@ AppBuilder.register("uploadfile", function (exports) {
       e.preventDefault();
       e.stopPropagation();
     });
-
+    const allData = [];
     const dataSource = [];
     uploadArea.on("drop", function (e) {
       e.preventDefault();
@@ -142,7 +145,7 @@ AppBuilder.register("uploadfile", function (exports) {
       for (let key in files) {
         if (files[key].name && files[key].lastModified) {
           const fileExtension = "." + files[key].name.split(".").pop();
-          if (extensions.includes(fileExtension)) {
+          if (!extensions || extensions.includes(fileExtension)) {
             if (dataSource.length < config.MaxFilesCount) {
               if (files[key].size < config.MaxFileWeight * 1024 * 1024) {
                 const file = files[key];
@@ -168,10 +171,20 @@ AppBuilder.register("uploadfile", function (exports) {
                   const reader = new FileReader();
                   reader.onload = function (e) {
                     var content = e.target.result;
-                    instance.datasources.push(content);
-                    console.log(instance.datasources);
+                    allData.push(content);
+                    console.log(allData);
+                    var tempAllData = [];
+                    for (let i of allData) {
+                      tempAllData = tempAllData.concat(
+                        getInt64Bytes(i.byteLength)
+                      );
+                      tempAllData = tempAllData.concat(i);
+                    }
+                    console.log(tempAllData);
+                    instance.updateValue(tempAllData);
                   };
-                  reader.readAsBinaryString(file);
+                  reader.readAsArrayBuffer(file);
+                  // reader.readAsBinaryString(file);
                 } else SETTER("message/warning", config.RepeatWarning);
 
                 let listElement = document.querySelectorAll(".list-item");
@@ -201,8 +214,16 @@ AppBuilder.register("uploadfile", function (exports) {
             dataSource.splice(i, 1);
             console.log(dataSource);
 
-            instance.datasources.splice(i, 1);
-            console.log(instance.datasources);
+            allData.splice(i, 1);
+            console.log(allData);
+
+            var tempAllData = [];
+            for (let i of allData) {
+              tempAllData = tempAllData.concat(getInt64Bytes(i.byteLength));
+              tempAllData = tempAllData.concat(i);
+            }
+            console.log(tempAllData);
+            instance.updateValue(tempAllData);
           }
         }
         $(this).parent().remove();
@@ -244,10 +265,20 @@ AppBuilder.register("uploadfile", function (exports) {
                 const reader = new FileReader();
                 reader.onload = function (e) {
                   var content = e.target.result;
-                  instance.datasources.push(content);
-                  console.log(instance.datasources);
+                  allData.push(content);
+                  console.log(allData);
+
+                  var tempAllData = [];
+                  for (let i of allData) {
+                    tempAllData = tempAllData.concat(
+                      getInt64Bytes(i.byteLength)
+                    );
+                    tempAllData = tempAllData.concat(i);
+                  }
+                  console.log(tempAllData);
+                  instance.updateValue(tempAllData);
                 };
-                reader.readAsBinaryString(file);
+                reader.readAsArrayBuffer(file);
               } else SETTER("message/warning", config.RepeatWarning);
 
               let listElement = document.querySelectorAll(".list-item");
@@ -315,8 +346,20 @@ AppBuilder.register("uploadfile", function (exports) {
                       console.log(data);
 
                       fileData.data = data;
-                      instance.datasources.push(data);
-                      console.log(instance.datasources);
+                      allData.push(data);
+                      console.log(allData);
+
+                      var tempAllData = [];
+                      for (let i of allData) {
+                        console.log(i);
+                        console.log(i.byteLength);
+                        tempAllData = tempAllData.concat(
+                          getInt64Bytes(i.byteLength)
+                        );
+                        tempAllData = tempAllData.concat(i);
+                      }
+                      console.log(tempAllData);
+                      instance.updateValue(tempAllData);
 
                       let listElement = document.querySelectorAll(".list-item");
                       removeFile(listElement);
@@ -339,7 +382,6 @@ AppBuilder.register("uploadfile", function (exports) {
 
     // Google Drive
 
-    // window.addEventListener("load", function () {
     var scriptTag1 = document.createElement("script");
     scriptTag1.src = "https://apis.google.com/js/api.js?onload=onApiLoad";
     scriptTag1.setAttribute("type", "text/javascript");
@@ -352,26 +394,7 @@ AppBuilder.register("uploadfile", function (exports) {
 
     document.body.appendChild(scriptTag1);
     document.body.appendChild(scriptTag2);
-    // });
 
-    // var googleCodeToBeCalled = function(){
-
-    function onApiLoad() {
-      gapi.load("client:picker", onPickerApiLoad);
-      alert("!!!!!!!!!!!!!!!!!");
-    }
-
-    async function onPickerApiLoad() {
-      await gapi.client.load(
-        "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"
-      ),
-        (pickerInited = !0);
-    }
-    function gaccLoaded() {
-      setTimeout(function () {
-        gaccInited = !0;
-      }, 200);
-    }
     function createPicker() {
       tokenClient = google.accounts.oauth2.initTokenClient({
         client_id:
@@ -385,8 +408,7 @@ AppBuilder.register("uploadfile", function (exports) {
           .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
           .addView(google.picker.ViewId.DOCS)
           .setOAuthToken(accessToken)
-          //.setDeveloperKey("AIzaSyArjLBoYN0w9ExNSFfFBWcKX63WmLVSHAo")
-          .setMaxItems(10)
+          .setMaxItems(config.MaxFilesCount)
           .setCallback(pickerCallback)
           .build()
           .setVisible(true);
@@ -410,36 +432,75 @@ AppBuilder.register("uploadfile", function (exports) {
       console.log(e);
       e.action == google.picker.Action.PICKED &&
         ((cancelled = !1),
+        console.log("callback1111"),
+        console.log(e),
         $.each(e[google.picker.Response.DOCUMENTS], function (e, o) {
-          var i = Math.random();
-          (allFilesFinished[i] = !1), (o.randomId = i);
+          const fileExtension = "." + o.name.split(".").pop();
+          if (!extensions || extensions.includes(fileExtension)) {
+            console.log(dataSource);
+            const fileData = {};
+            const fileAlreadyExists = (string, array) => {
+              return array.some((obj) => Object.values(obj).includes(string));
+            };
+
+            if (!fileAlreadyExists(o.name, dataSource)) {
+              if (o.sizeBytes <= config.MaxFileWeight * 1024 * 1024) {
+                fileData.name = o.name;
+                fileData.ID = Math.random();
+                fileData.size = o.sizeBytes;
+                console.log(fileData);
+                dataSource.push(fileData);
+                console.log(dataSource);
+
+                element.find(".files")
+                  .append(`<li class="list-item"title="${fileData.ID}">
+									<p class="item" >${fileData.name}</p>
+									<span class="delete">&#128937;</span>
+								</li>`);
+                fetch(o.url.link)
+                  .then((response) => response.arrayBuffer())
+                  .then((data) => {
+                    console.log(data);
+
+                    fileData.data = data;
+                    allData.push(data);
+                    console.log(allData);
+
+                    var tempAllData = [];
+                    for (let i of allData) {
+                      tempAllData = tempAllData.concat(getInt64Bytes(i.length));
+                      tempAllData = tempAllData.concat(i);
+                    }
+                    console.log(tempAllData);
+                    instance.updateValue(tempAllData);
+
+                    let listElement = document.querySelectorAll(".list-item");
+                    removeFile(listElement);
+                  });
+              } else SETTER("message/warning", config.WeightWarning);
+            } else SETTER("message/warning", config.RepeatWarning);
+          } else {
+            SETTER("message/warning", config.ExtWarning);
+          }
+
+          // var i = Math.random();
+          // console.log(e),
+          // console.log(o),
+          // (allFilesFinished[i] = !1), (o.randomId = i);
         }),
         $.each(e[google.picker.Response.DOCUMENTS], function (e, o) {
           // checkWhiteList(o.name, filetypes)
           //   ? gdriveUpload(e, o)
           //   : (postFailedUpload(o.name, 0, "unsupported filetype"),
           console.log("callback");
+          console.log(e);
         }));
     }
-    const filetypes = ".pdf";
-    function postFailedUpload(e, o, i) {
-      (extension = e.split(".").pop()),
-        $.ajax({
-          url: "/failed_uploads",
-          type: "POST",
-          data: {
-            failed_upload: { name: e, extension: extension, size: o, error: i },
-          },
-          dataType: "json",
-        });
-    }
-    var cancelled = !1,
-      allFilesFinished = {},
-      percentage = 0;
-    let tokenClient,
-      accessToken = null,
-      pickerInited = !1,
-      gaccInited = !1;
+
+    var cancelled = !1;
+
+    let tokenClient;
+    let accessToken = null;
 
     googleButton.on("click", function (e) {
       e.preventDefault(), createPicker();
@@ -449,9 +510,31 @@ AppBuilder.register("uploadfile", function (exports) {
     // return new RegExp("(" + o.join("|").replace(/\./g, "\\.") + ")$").test(i);
     // };
 
-    // };
-    // loadGoogleJS(googleCodeToBeCalled, document.body);
-
+    function getInt64Bytes(x) {
+      var bytes = [];
+      var i = 8;
+      do {
+        bytes[8 - i--] = x & 255;
+        x = x >> 8;
+      } while (i);
+      return bytes;
+    }
     instance.on("ready", function () {});
   };
 });
+
+function onApiLoad() {
+  gapi.load("client:picker", onPickerApiLoad);
+}
+
+async function onPickerApiLoad() {
+  await gapi.client.load(
+    "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"
+  ),
+    (pickerInited = !0);
+}
+function gaccLoaded() {
+  setTimeout(function () {
+    gaccInited = !0;
+  }, 200);
+}
